@@ -15,7 +15,7 @@ args = parser.parse_args()
 
 interactive = args.interactive
 
-conn = psycopg2.connect("dbname=olympics user=vagrant")
+conn = psycopg2.connect("dbname=olympics user=zainb")
 cur = conn.cursor()
 
 totalscore = 0
