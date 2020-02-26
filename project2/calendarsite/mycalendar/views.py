@@ -80,8 +80,35 @@ def modifiedevent(request, event_id):
     return eventindex(request, event_id)
 
 def waiting(request, user_id, calendar_id):
-        context = {}
+        print(calendar_id)
+        cal = Calendar.objects.get(pk=calendar_id)
+        events = cal.event_set.all()
+        waiting = [w for w in events if BelongsTo.Status(BelongsTo.objects.get(event=w, calendar=cal).status) == "WR"]
+        context = {'waiting': waiting, 'user_id': user_id, 'calendar_id': calendar_id}
         return render(request, 'mycalendar/waiting.html', context)
+
+def submitwaiting(request, user_id, calendar_id):
+        cal = Calendar.objects.get(pk=calendar_id)
+        events = cal.event_set.all()
+        waiting = [w for w in events if BelongsTo.Status(BelongsTo.objects.get(event=w, calendar=cal).status) == "WR"]
+        for w in waiting:
+            BelongsTo.objects.filter(event=w, calendar=cal).delete()
+        for w in waiting:
+            resp = request.POST["r{}".format(w.id)]
+            match = BelongsTo.Status.WAITING_RESPONSE
+            if resp == "AC":
+                match = BelongsTo.Status.ACCEPTED
+            elif resp == "DE":
+                match =  BelongsTo.Status.DECLINED
+            elif resp == "TE":
+                match = BelongsTo.TENTATIVE
+            bt = BelongsTo(event=w, calendar=cal, status=match)
+            bt.save()
+        context = {'waiting': waiting}
+        return HttpResponseRedirect(reverse('submitedwaiting', args=(calendar_id,)))
+
+def submitedwaiting(request, calendar_id):
+    return calendarindex(request, calendar_id)
 
 # Here we will compute some statistics about the data in the database
 # Specifically: for each calendar, we will compute the number of events in different status, and a total as a 6-tuple

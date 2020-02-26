@@ -11,19 +11,23 @@ urlpatterns = [
 
         url(r'^calendar/(?P<calendar_id>[0-9]+)/$', views.calendarindex, name='calendarindex'),
 
-        url(r'^user/(?P<user_id>[0-9]+)/createevent$', views.createevent, name='createevent'),
-
         url(r'^modifyevent/(?P<event_id>[0-9]+)/$', views.modifyevent, name='modifyevent'),
-
-        url(r'^user/(?P<user_id>[0-9]+)/submitcreateevent/$', views.submitcreateevent, name='submitcreateevent'),
 
         url(r'^submitmodifyevent/(?P<event_id>[0-9]+)/$', views.submitmodifyevent, name='submitmodifyevent'),
 
-        url(r'^user/(?P<user_id>[0-9]+)/createdevent/(?P<event_id>[0-9]+)/$', views.createdevent, name='createdevent'),
-
         url(r'^modifiedevent/(?P<event_id>[0-9]+)/$', views.modifiedevent, name='modifiedevent'),
 
+        url(r'^user/(?P<user_id>[0-9]+)/createevent$', views.createevent, name='createevent'),
+
+        url(r'^user/(?P<user_id>[0-9]+)/submitcreateevent/$', views.submitcreateevent, name='submitcreateevent'),
+
+        url(r'^user/(?P<user_id>[0-9]+)/createdevent/(?P<event_id>[0-9]+)/$', views.createdevent, name='createdevent'),
+
         url(r'^waiting/user/(?P<user_id>[0-9]+)/calendar/(?P<calendar_id>[0-9]+)/$', views.waiting, name='waiting'),
+
+        url(r'^submitwaiting/user/(?P<user_id>[0-9]+)/calendar/(?P<calendar_id>[0-9]+)/$', views.submitwaiting, name='submitwaiting'),
+
+        url(r'^submitedwaiting/(?P<calendar_id>[0-9]+)/$', views.submitedwaiting, name='submitedwaiting'),
 
         url(r'^summary$', views.summary, name='summary'),
 ]

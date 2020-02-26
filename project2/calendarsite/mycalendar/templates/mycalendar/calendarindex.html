@@ -7,9 +7,6 @@
     <tr>
     <td style="border:2px solid black"> <a href="http://localhost:8888/mycalendar/event/{{e.id}}">{{ e.title }}</a> <td style="border:2px solid black"> {{ e.start_time }} <td style="border:2px solid black"> {{ e.end_time }} </tr>
     </tr>
-    <script>
-    $("a").attr("href", "http://www.google.com")
-    </script>
     {% endfor %}
     </table>
     {% endfor %}

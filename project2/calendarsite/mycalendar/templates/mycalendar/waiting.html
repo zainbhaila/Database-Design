@@ -1,4 +1,17 @@
 <b>The user should be shown all the events in this calendar that are in the WAITING_RESPONSE state. The user should then be able to modify the status on any or all of
-them, and press submit to save. After the user Submits, the user should be redirected to their main page. </b> <br><br> 
+them, and press submit to save. After the user Submits, the user should be redirected to their main page. </b> <br><br>
+<h4> List of Calendar Events Awaiting Response</h4>
+<form action="/mycalendar/submitwaiting/user/{{user_id}}/calendar/{{calendar_id}}/" method="post">
+{% csrf_token %}
 
-{% debug %}
+<table style="border:2px solid black; padding: 10px; border-collapse: collapse">
+<p>Enter WR for awaiting reponse, AC to accept an invite, DE to decline an invite, and TE to mark as tentative. Incorrect input will default to WR.</p>
+<tr><th style="border:2px solid black">Event Title</th><th style="border:2px solid black">Status</th></tr>
+{% for e in waiting %}
+<tr>
+<td style="border:2px solid black">{{ e.title }} <td style="border:2px solid black"><input name="r{{e.id}}" type="text" value="WR" /></tr>
+</tr>
+{% endfor %}
+</table>
+<input type="submit" value="Submit Event" />
+</form>
