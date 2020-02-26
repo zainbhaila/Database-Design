@@ -40,6 +40,8 @@ select * from (
     select c.name as country_name, count(*)::decimal/c.population as ratio from results r
     inner join players p on p.player_id = r.player_id
     inner join countries c on c.country_id = p.country_id
+    inner join events e on e.event_id = r.event_id
+    where e.olympic_id = 'SYD2000'
     group by c.name, c.population
     order by ratio
     limit 5
@@ -113,14 +115,15 @@ set country_id = (select p.country_id from players p where p.player_id = Individ
 ### 10. Which country had the largest percentage of players (who won a medal of course) whose names started with a vowel ?
 ### Output Column: Country Name
 queries[10] = """
-select * from (
-select c.name, count(p.player_id) as total_players, count(p.player_id) filter (where p.name similar to '[aeiouAEIOU]%') as vowel_players from players p
-inner join countries c on c.country_id = p.country_id
-group by c.name
-order by vowel_players/total_players
+select name as country_name from (
+    select c.name, (count(p.player_id) filter (where p.name similar to '[aeiouAEIOU]%'))/count(p.player_id) as ratio from players p
+    inner join countries c on c.country_id = p.country_id
+    group by c.name
 ) as result
-order by ratio
-limit 1
+where ratio = (select max(ratio) from (select c.name, (count(p.player_id) filter (where p.name similar to '[aeiouAEIOU]%'))/count(p.player_id) as ratio from players p
+                inner join countries c on c.country_id = p.country_id
+                group by c.name) as result2)
+order by ratio DESC;
 """
 
 ### 11. Find all athletes who won at least one of each medal (GOLD, SILVER and BRONZE) at a single Olympics.
@@ -161,5 +164,8 @@ select player_name from (
 ### Output order: ascending by rank
 ### HINT: There is a special operator in SQL to help with this.
 queries[13] = """
-select 0;
+select c.name as country_name, count(r.medal) as num_medals, rank() over (order by count(r.medal) DESC) as rank from results r
+inner join players p on p.player_id = r.player_id
+inner join countries c on c.country_id = p.country_id
+group by c.name;
 """
