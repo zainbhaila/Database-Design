@@ -29,7 +29,7 @@ def calendarindex(request, calendar_id):
         last = None
         count = 0
         elist2.append([])
-        for i in elist:
+        for i in elist: # break up into seperate dates
             if last == None:
                 last = i.start_time.date()
             if last != i.start_time.date():
@@ -56,6 +56,29 @@ def submitcreateevent(request, user_id):
 def createdevent(request, user_id, event_id):
     return eventindex(request, event_id)
 
+def modifyevent(request, event_id):
+        event = Event.objects.get(pk=event_id)
+        event.start_format = event.start_time.strftime('%Y-%m-%d %H:%M') # reformat dates to YYYY-MM-DD HH:MM
+        event.end_format = event.end_time.strftime('%Y-%m-%d %H:%M')
+        context = {'calendar_list': Calendar.objects.all(), 'event': event }
+        return render(request, 'mycalendar/modifyevent.html', context)
+
+def submitmodifyevent(request, event_id):
+        event = Event.objects.get(pk=event_id)
+        chosen_calendars = [c for c in Calendar.objects.all() if request.POST["answer{}".format(c.id)] == "true"]
+        all_calendars = Calendar.objects.all()
+        e = Event(id=event_id, title=request.POST["title"], start_time=request.POST["start_time"], end_time=request.POST["end_time"], created_by = event.created_by)
+        e.save()
+        for c in all_calendars: # remove old event from all calendars
+            BelongsTo.objects.filter(event=event, calendar=c).delete()
+        for c in chosen_calendars: # post new status to all calendars
+            bt = BelongsTo(event=e, calendar=c, status=BelongsTo.Status.WAITING_RESPONSE)
+            bt.save()
+        return HttpResponseRedirect(reverse('modifiedevent', args=(e.id,)))
+
+def modifiedevent(request, event_id):
+    return eventindex(request, event_id)
+
 def waiting(request, user_id, calendar_id):
         context = {}
         return render(request, 'mycalendar/waiting.html', context)
@@ -74,7 +97,7 @@ def summary(request):
         ac = 0
         de = 0
         te = 0
-        for j in events:
+        for j in events: # event response counting
             total += 1
             status = BelongsTo.Status(BelongsTo.objects.get(event=j, calendar=i).status)
             if status == "WR":
