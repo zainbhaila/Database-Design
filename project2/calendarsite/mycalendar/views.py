@@ -24,7 +24,20 @@ def eventindex(request, event_id):
         return render(request, 'mycalendar/eventindex.html', context)
 
 def calendarindex(request, calendar_id):
-        context = { 'calendar_id': calendar_id, 'event_list': Calendar.objects.get(pk=calendar_id).event_set.all() }
+        elist = Calendar.objects.get(pk=calendar_id).event_set.all().order_by('start_time')
+        elist2 = []
+        last = None
+        count = 0
+        elist2.append([])
+        for i in elist:
+            if last == None:
+                last = i.start_time.date()
+            if last != i.start_time.date():
+                count += 1
+                elist2.append([])
+                last = i.start_time.date()
+            elist2[count].append(i)
+        context = { 'calendar_id': calendar_id, 'event_list': elist2 }
         return render(request, 'mycalendar/calendarindex.html', context)
 
 def createevent(request, user_id):
@@ -52,6 +65,26 @@ def waiting(request, user_id, calendar_id):
 # The tuple fields are: (calendar title, number of waiting response events, number of accepted events, number of declined events, number of tentative events, total)
 # ('John\'s Work Calendar, 1, 4, 3, 4, 10)
 def summary(request):
-    summary_tuples = [('Sample Calendar', 1, 4, 3, 4, 10)]
+    calendars = Calendar.objects.all()
+    summary_tuples = []
+    for i in calendars:
+        events = Calendar.objects.get(pk=i.id).event_set.all()
+        total = 0
+        wr = 0
+        ac = 0
+        de = 0
+        te = 0
+        for j in events:
+            total += 1
+            status = BelongsTo.Status(BelongsTo.objects.get(event=j, calendar=i).status)
+            if status == "WR":
+                wr += 1
+            elif status == "AC":
+                ac += 1
+            elif status == "DE":
+                de += 1
+            elif status == "TE":
+                te += 1
+        summary_tuples.append((i.title, wr, ac, de, te, total))
     context = {'summary_tuples': summary_tuples}
     return render(request, 'mycalendar/summary.html', context)
