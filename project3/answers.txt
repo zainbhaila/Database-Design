@@ -1,0 +1,172 @@
+Question 1
+
+First, you need to remove the space between Chris and % to capture names like
+Christine. The second issue is including the name check in the join clause. The
+left outer join results in all records in p being included regardless of whether
+or not they have a corresponding value in results. By moving the name check to a
+where clause, it gets all the records from results and then filters out with
+Chris%.
+
+select p.player_id, p.name, count(r.medal)
+from players p
+left outer join results r on (p.player_id = r.player_id and r.medal = 'GOLD')
+where p.name like 'Chris%'
+group by p.player_id, p.name
+order by p.player_id;
+
+
+Question 2
+
+select extract(year from birthdate) as birthyear, count(distinct players.player_id) as num_players, count(case when results.medal = 'GOLD' then 1 end)
+from players, results, events
+where players.player_id = results.player_id and events.event_id = results.event_id and events.olympic_id = 'ATH2004'
+group by extract(year from birthdate)
+order by birthyear asc;
+
+GroupAggregate  (cost=55.33..64.63 rows=338 width=24)
+   Group Key: (date_part('year'::text, (players.birthdate)::timestamp without time zone))
+   ->  Sort  (cost=55.33..56.18 rows=338 width=27)
+         Sort Key: (date_part('year'::text, (players.birthdate)::timestamp without time zone))
+         ->  Hash Join  (cost=24.03..41.13 rows=338 width=27)
+               Hash Cond: (results.player_id = players.player_id)
+               ->  Hash Join  (cost=7.84..22.35 rows=338 width=19)
+                     Hash Cond: (results.event_id = events.event_id)
+                     ->  Seq Scan on results  (cost=0.00..12.71 rows=671 width=27)
+                     ->  Hash  (cost=6.89..6.89 rows=76 width=8)
+                           ->  Seq Scan on events  (cost=0.00..6.89 rows=76 width=8)
+                                 Filter: (olympic_id = 'ATH2004'::bpchar)
+               ->  Hash  (cost=10.53..10.53 rows=453 width=15)
+                     ->  Seq Scan on players  (cost=0.00..10.53 rows=453 width=15)
+(14 rows)
+
+Group(year(birthdate))
+|_ sort(year(birthdate))
+  |_ hash join(player_id)
+    |_ hash join(event_id)
+      |_ results
+      |_ where(olympic_id=ATH2004)
+        |_ events
+    |_ players
+
+
+Question 3
+
+with temp as (
+    select p.name as player_name, birthdate, o.olympic_id as olympic_id, startdate, enddate
+    from players p, events e, results r, olympics o
+    where p.player_id = r.player_id and r.event_id = e.event_id and e.olympic_id = o.olympic_id
+)
+select distinct player_name, birthdate, olympic_id
+from temp
+where extract(year from age(startdate - 1, birthdate)) != extract(year from age(enddate, birthdate))
+order by player_name;
+
+Sort  (cost=103.59..104.09 rows=200 width=200)
+   Sort Key: temp.player_name
+   CTE temp
+     ->  Hash Join  (cost=40.66..58.74 rows=671 width=85)
+           Hash Cond: (e.olympic_id = o.olympic_id)
+           ->  Hash Join  (cost=24.59..40.88 rows=671 width=53)
+                 Hash Cond: (r.event_id = e.event_id)
+                 ->  Hash Join  (cost=16.19..30.68 rows=671 width=53)
+                       Hash Cond: (r.player_id = p.player_id)
+                       ->  Seq Scan on results r  (cost=0.00..12.71 rows=671 width=19)
+                       ->  Hash  (cost=10.53..10.53 rows=453 width=56)
+                             ->  Seq Scan on players p  (cost=0.00..10.53 rows=453 width=56)
+                 ->  Hash  (cost=6.51..6.51 rows=151 width=16)
+                       ->  Seq Scan on events e  (cost=0.00..6.51 rows=151 width=16)
+           ->  Hash  (cost=12.70..12.70 rows=270 width=40)
+                 ->  Seq Scan on olympics o  (cost=0.00..12.70 rows=270 width=40)
+   ->  HashAggregate  (cost=35.20..37.20 rows=200 width=200)
+         Group Key: temp.player_name, temp.birthdate, temp.olympic_id
+         ->  CTE Scan on temp  (cost=0.00..30.20 rows=668 width=200)
+               Filter: (date_part('year'::text, age(((startdate - 1))::timestamp with time zone, (birthdate)::timestamp with time zone)) <> date_part('year'::text, age((enddate)::timestamp with time zone, (birthdate)::timestamp with time zone)))
+(20 rows)
+
+Sort(player_name)
+|_CTE temp
+  |_ hash join(olympic_id)
+    |_ hash join(event_id)
+      |_ hash join(player_id)
+        |_ results
+        |_players
+      |_ events
+    |_ olympics
+|_Select (player_name, birthdate, olympic_id)
+  |_where(year(age at startdate) != year(age at enddate))
+    |_temp
+
+Question 4
+
+Query 1
+
+count
+-------
+    0
+(1 row)
+
+Aggregate  (cost=1962.19..1962.20 rows=1 width=8) (actual time=14.315..14.315 rows=1 loops=1)
+  ->  Nested Loop  (cost=17.56..1948.44 rows=5500 width=0) (actual time=14.310..14.310 rows=0 loops=1)
+        ->  Hash Join  (cost=17.56..1841.41 rows=500 width=4) (actual time=14.309..14.309 rows=0 loops=1)
+              Hash Cond: (r.b = s.b)
+              ->  Seq Scan on r  (cost=0.00..1443.62 rows=100062 width=4) (actual time=0.022..6.287 rows=100000 loops=1)
+              ->  Hash  (cost=17.50..17.50 rows=5 width=8) (actual time=0.264..0.264 rows=1 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    ->  Seq Scan on s  (cost=0.00..17.50 rows=5 width=8) (actual time=0.019..0.241 rows=1 loops=1)
+                          Filter: (c = 1)
+                          Rows Removed by Filter: 999
+        ->  Materialize  (cost=0.00..38.30 rows=11 width=4) (never executed)
+              ->  Seq Scan on t  (cost=0.00..38.25 rows=11 width=4) (never executed)
+                    Filter: (c = 1)
+Planning time: 0.334 ms
+Execution time: 14.417 ms
+(15 rows)
+
+
+Query 2
+
+count
+-------
+ 7647
+(1 row)
+
+Aggregate  (cost=2575.48..2575.49 rows=1 width=8) (actual time=16.949..16.949 rows=1 loops=1)
+  ->  Nested Loop  (cost=18.00..2465.43 rows=44022 width=0) (actual time=0.359..16.493 rows=7647 loops=1)
+        ->  Hash Join  (cost=18.00..1876.87 rows=4002 width=4) (actual time=0.330..14.755 rows=7647 loops=1)
+              Hash Cond: (r.b = s.b)
+              ->  Seq Scan on r  (cost=0.00..1443.62 rows=100062 width=4) (actual time=0.025..6.222 rows=100000 loops=1)
+              ->  Hash  (cost=17.50..17.50 rows=40 width=8) (actual time=0.290..0.291 rows=40 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                    ->  Seq Scan on s  (cost=0.00..17.50 rows=40 width=8) (actual time=0.230..0.248 rows=40 loops=1)
+                          Filter: (c = 48)
+                          Rows Removed by Filter: 960
+        ->  Materialize  (cost=0.00..38.30 rows=11 width=4) (actual time=0.000..0.000 rows=1 loops=7647)
+              ->  Seq Scan on t  (cost=0.00..38.25 rows=11 width=4) (actual time=0.017..0.018 rows=1 loops=1)
+                    Filter: (c = 48)
+                    Rows Removed by Filter: 49
+Planning time: 0.321 ms
+Execution time: 17.018 ms
+(16 rows)
+
+Both aggregate functions correctly determined there should only be one final
+row. The differences occur within the nested loop in the query plan. First, lets
+compare the seq scan on s. Both filter based on the condition T.C = x where x is
+the integer. In query 1, x is 1, and there is only 1 row in s where c = 1. So
+the query plan is correct. Then in query 2, x is 48, and there are 40 rows in s
+where c = 48. So the query plan is correct again. And then, we can look at the
+seq scan on r, which correctly gets all 100000 rows from r in both queries.
+Then the hash join that combines r.b = s.b. For query 1, there are no rows where
+s.b = r.b and s.c = 1, so query plan correctly identifies that there are 0 rows
+and never executes the seq scan on t because there is no need to. For query 2,
+there are 7647 rows in r that correspond to a row in s that has s.c = 48. So
+query two correctly identifies that, and then executes the seq scan on t. There
+is only one row in t where c = 48, so that row then corresponds to all the rows
+found by the hash join on s and r and the query plan correctly identifies the
+7647 rows found.
+
+Generally the query plan approximated the sizes of intermediate results
+perfectly, although whether that would hold for larger datasets I am unsure.
+Differences in cardinalities for the two queries come from the T.C value
+because there is only one value in s that s.c = t.c = 1, and forty where
+s.c = t.c = 48. And then when joining with r, there aren't values in r that
+correspond to s.b for s.c = 1, while there are many for s.c = 48.
