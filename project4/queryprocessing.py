@@ -130,7 +130,49 @@ class HashJoin(Operator):
 						yield Tuple(None, output)
 
 		elif self.jointype == self.FULL_OUTER_JOIN:
-			raise ValueError("Functionality to be implemented")
+			# compute inner join first, then get tuples that are not existant in the other set
+
+			# First, we load up all the tuples from the right input into the hash table
+			right_hash = dict()
+			length_r = len(self.right_child.relation.schema)
+			for r in self.right_child.get_next():
+				key = r.getAttribute(self.right_attribute)
+				if key in right_hash:
+					right_hash[key].append(r)
+				else:
+					right_hash[key] = [r]
+
+			# Then, for each tuple in the left input, we look for matches and output those
+			# Using "yield" significantly simplifies this code
+			# load tuples into left hash table
+			left_hash = dict()
+			length_l = len(self.left_child.relation.schema)
+			for l in self.left_child.get_next():
+				key = l.getAttribute(self.left_attribute)
+				length_l = len(l.schema)
+				if key in left_hash:
+					left_hash[key].append(l)
+				else:
+					left_hash[key] = [l]
+				if key in right_hash:
+					for r in right_hash[key]:
+						output = list(l.t)
+						output.extend(list(r.t))
+						yield Tuple(None, output)
+
+			for keyl in left_hash: # key is only in left child
+				if keyl not in right_hash:
+					for l in left_hash[keyl]:
+						output = list(l.t)
+						output.extend([None for i in range(length_r)])
+						yield Tuple(None, output)
+
+			for keyr in right_hash: # key is only in right child
+				if keyr not in left_hash:
+					for r in right_hash[keyr]:
+						output = list([None for i in range(length_l)])
+						output.extend(list(r.t))
+						yield Tuple(None, output)
 		else:
 			raise ValueError("This should not happen")
 
@@ -342,8 +384,37 @@ class SetIntersection(Operator):
 
 	# As above, use 'yield' to simplify writing this code
 	def get_next(self):
-		raise ValueError("Functionality to be implemented")
+		length = len(self.right_child.relation.schema)
+
+		# First, we load up all the tuples from the right input into the hash table
+		right_hash = dict()
+		for r in self.right_child.get_next():
+			r = r.t
+			if r in right_hash:
+				right_hash[r] += 1
+			else:
+				right_hash[r] = 1
+
+		# load tuples into left hash table
+		left_hash = dict()
+		length_l = len(self.left_child.relation.schema)
+		for l in self.left_child.get_next():
+			l = l.t
+			if l in left_hash:
+				left_hash[l] += 1
+			else:
+				left_hash[l] = 1
+
+		for key in left_hash: # add intersection to output
+			if key in right_hash:
+				if self.keep_duplicates: # add all occurences if we are keeping duplicates
+					for i in range((left_hash[key] + right_hash[key])//2):
+						yield Tuple(None, key)
+				else:
+					yield Tuple(None, key)
 
 	# Typically you would close any open files etc.
 	def close(self):
+		self.right_child.close()
+		self.left_child.close()
 		return

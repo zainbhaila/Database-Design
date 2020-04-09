@@ -21,8 +21,8 @@ class Database:
 		return self.indexes[(relname, attribute)]
 
 def createDatabase1(name):
-	## Let's first create a relation with a bunch of tuples 
- 	
+	## Let's first create a relation with a bunch of tuples
+
 	db = Database(name)
 	instr_schema = ["ID", "name", "dept_name", "salary"]
 	instructor = db.newRelation("instructor", instr_schema)
@@ -32,12 +32,14 @@ def createDatabase1(name):
 	instructor.insertTuple(Tuple(instr_schema, ('22222', 'Einstein', 'Physics', '95000')));
 	instructor.insertTuple(Tuple(instr_schema, ('32343', 'El Said', 'History', '60000')));
 	instructor.insertTuple(Tuple(instr_schema, ('33456', 'Gold', 'Physics', '87000')));
+	instructor.insertTuple(Tuple(instr_schema, ('33450', 'Gold', 'Physics', '87000')));
 	instructor.insertTuple(Tuple(instr_schema, ('45565', 'Katz', 'Comp. Sci.', '75000')));
 	instructor.insertTuple(Tuple(instr_schema, ('58583', 'Califieri', 'History', '62000')));
 	instructor.insertTuple(Tuple(instr_schema, ('76543', 'Singh', 'Finance', '80000')));
 	instructor.insertTuple(Tuple(instr_schema, ('76766', 'Crick', 'Biology', '72000')));
 	instructor.insertTuple(Tuple(instr_schema, ('83821', 'Brandt', 'Comp. Sci.', '92000')));
 	instructor.insertTuple(Tuple(instr_schema, ('98345', 'Kim', 'Elec. Eng.', '80000')));
+	instructor.insertTuple(Tuple(instr_schema, ('98345', 'Kim', 'Elec Eng.', '80000')));
 
 	dept_schema = ["dept_name", "building", "budget"]
 	department = db.newRelation("department", dept_schema)
@@ -49,6 +51,7 @@ def createDatabase1(name):
 	department.insertTuple(Tuple(dept_schema, ('History', 'Painter', '50000')));
 	department.insertTuple(Tuple(dept_schema, ('Music', 'Packard', '80000')));
 	department.insertTuple(Tuple(dept_schema, ('Physics', 'Watson', '70000')));
+	department.insertTuple(Tuple(dept_schema, ('Physics', 'Watt', '70200')));
 
 	instructor2 = db.newRelation("instructor_2", instr_schema)
 	instructor2.insertTuple(Tuple(instr_schema, ('10101', 'Srinivasan', 'Comp. Sci.', '65000')));

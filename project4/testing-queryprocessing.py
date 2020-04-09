@@ -72,7 +72,7 @@ def query5():
 #query1a()
 #query2()
 #query3()
-query4()
+#query4()
 #query5()
 
 # Full Outer Hash Join
@@ -120,4 +120,5 @@ def query8b():
 	for t in sm.get_next():
 		print("---> " + str(t))
 
-#query8b()
+#query6()
+query8b()

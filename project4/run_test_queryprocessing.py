@@ -137,6 +137,6 @@ si_y = create_two_attribute_relation("Y1", ["A", "B"], [(1, 1), (1, 2)])
 si_results = [(1, 2)]
 
 
-run_one_test(GroupByAggregate(SequentialScan(aggregate_relation), "A", GroupByAggregate.MEDIAN), avg_result)
+run_one_test(GroupByAggregate(SequentialScan(aggregate_relation), "A", GroupByAggregate.AVERAGE), avg_result)
 run_one_test(HashJoin(SequentialScan(hj_r), SequentialScan(hj_s), "B", "B", HashJoin.FULL_OUTER_JOIN), hj_results)
 run_one_test(SetIntersection(SequentialScan(si_x), SequentialScan(si_y), False), si_results)
