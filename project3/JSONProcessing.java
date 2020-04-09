@@ -135,5 +135,7 @@ public class JSONProcessing
 			String json = in_scanner.nextLine();
 			processJSON(json);
 		}
+		
+		in_scanner.close();
 	}
 }
