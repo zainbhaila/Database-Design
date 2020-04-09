@@ -11,7 +11,7 @@ class Operator:
 		return
 
 # We will only support equality predicate for now
-# This class denotes a predicate, e.g. "a = 5" (attribute will be a, and value will be 5), 
+# This class denotes a predicate, e.g. "a = 5" (attribute will be a, and value will be 5),
 # and it supports a single method: "satisfiedBy"
 class Predicate:
 	def __init__(self, attribute, value):
@@ -26,13 +26,13 @@ class SequentialScan(Operator):
 		self.relation = relation
 		self.predicate = predicate
 
-	# Typically the init() here would open the appropriate file, etc. In our 
+	# Typically the init() here would open the appropriate file, etc. In our
 	# simple implementation, we don't need to do anything, especially when we
 	# use "yield"
 	def init(self):
 		return
 
-	# This is really simplified because of "yield", which allows us to return a value, 
+	# This is really simplified because of "yield", which allows us to return a value,
 	# and then continue where we left off when the next call comes
 	def get_next(self):
 		for i in range(0, len(self.relation.blocks)):
@@ -65,7 +65,7 @@ class NestedLoopsJoin(Operator):
 		self.left_child.init()
 		self.right_child.init()
 
-	# Again using "yield" greatly simplifies writing of this code -- otherwise we would have 
+	# Again using "yield" greatly simplifies writing of this code -- otherwise we would have
 	# to keep track of current pointers etc
 	def get_next(self):
 		for l in self.left_child.get_next():
@@ -117,7 +117,7 @@ class HashJoin(Operator):
 				key = r.getAttribute(self.right_attribute)
 				if key in hashtable:
 					hashtable[r.getAttribute(self.right_attribute)].append(r)
-				else: 
+				else:
 					hashtable[r.getAttribute(self.right_attribute)] = [r]
 			# Then, for each tuple in the left input, we look for matches and output those
 			# Using "yield" significantly simplifies this code
@@ -170,28 +170,58 @@ class GroupByAggregate(Operator):
 				return new_value
 			else:
 				return min(current_aggregate, new_value)
-		elif aggregate_function == GroupByAggregate.AVERAGE:
-			raise ValueError("Functionality to be implemented")
+		elif aggregate_function == GroupByAggregate.AVERAGE: # keep a tuple of sum and count
+			if current_aggregate is None:
+				return (new_value, 1)
+			else:
+				return (current_aggregate[0] + new_value, current_aggregate[1] + 1)
 		elif aggregate_function == GroupByAggregate.MEDIAN:
-			raise ValueError("Functionality to be implemented")
+			if current_aggregate is None:
+				return [new_value]
+			else:
+				current_aggregate.append(new_value)
+				return current_aggregate
 		elif aggregate_function == GroupByAggregate.MODE:
-			raise ValueError("Functionality to be implemented")
+			if current_aggregate is None:
+				return {new_value: 1}
+			else:
+				if new_value in current_aggregate:
+					current_aggregate[new_value] += 1
+				else:
+					current_aggregate[new_value] = 1
+			return current_aggregate
 		else:
 			raise ValueError("No such aggregate")
 
-	# Do any final computation that needs to be done 
+	# Do any final computation that needs to be done
 	# For COUNT, SUM, MIN, MAX, we can just return what we have been computing
 	# For the other three, we need to do something more
 	@staticmethod
 	def final_aggregate(aggregate_function, current_aggregate):
 		if aggregate_function in [GroupByAggregate.COUNT, GroupByAggregate.SUM, GroupByAggregate.MIN, GroupByAggregate.MAX]:
-			return current_aggregate 
+			return current_aggregate
 		elif aggregate_function == GroupByAggregate.AVERAGE:
-			raise ValueError("Functionality to be implemented")
+			if current_aggregate is None:
+				return None
+			else:
+				return current_aggregate[0]/current_aggregate[1]
 		elif aggregate_function == GroupByAggregate.MEDIAN:
-			raise ValueError("Functionality to be implemented")
+			if current_aggregate is None:
+				return None
+			elif len(current_aggregate) == 1:
+				return current_aggregate[0]
+			else:
+				current_aggregate.sort()
+				size = len(current_aggregate)
+				if (size % 2 == 0):
+					return (current_aggregate[size//2] + current_aggregate[size//2 - 1])/2
+				else:
+					return current_aggregate[size//2]
 		elif aggregate_function == GroupByAggregate.MODE:
-			raise ValueError("Functionality to be implemented")
+			if current_aggregate is None:
+				return None
+			else:
+				return max(current_aggregate, key=current_aggregate.get)
 		else:
 			raise ValueError("No such aggregate")
 
@@ -221,7 +251,7 @@ class GroupByAggregate(Operator):
 		else:
 			# for each different value "v" of the group by attribute, we should return a 2-tuple "(v, aggr_value)",
 			# where aggr_value is the value of the aggregate for the group of tuples corresponding to "v"
-			
+
 			# we will set up a 'dict' to keep track of all the groups
 			aggrs = dict()
 
@@ -269,7 +299,7 @@ class SortMergeJoin(Operator):
 
 			while ptr_l < len(left_input) and ptr_r < len(right_input):
 				set_L = [left_input[ptr_l]]
-				l_attr = left_input[ptr_l].getAttribute(self.left_attribute) 
+				l_attr = left_input[ptr_l].getAttribute(self.left_attribute)
 
 				ptr_l += 1
 				while ptr_l < len(left_input):
@@ -295,7 +325,7 @@ class SortMergeJoin(Operator):
 		self.left_child.close()
 		self.right_child.close()
 
-# You have to implement the Set INTERSECTION operator 
+# You have to implement the Set INTERSECTION operator
 # The input is two relations with identical schema, and the output is: left_child INTERSECT right_child
 # By default, SQL INTERSECTION removes duplicates -- our implementation may or may not remove duplicates based on the flag 'keep_duplicates' -- you have to implement both
 # Easiest way to implement this operator is through using a Hash Table, similarly to the Hash Join above
@@ -313,7 +343,7 @@ class SetIntersection(Operator):
 	# As above, use 'yield' to simplify writing this code
 	def get_next(self):
 		raise ValueError("Functionality to be implemented")
-		
+
 	# Typically you would close any open files etc.
 	def close(self):
 		return
