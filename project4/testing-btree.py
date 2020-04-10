@@ -38,18 +38,25 @@ def deleteFromTree(deleteKey):
 
 
 # Example of a search can be found in searchExample() above
-searchExample()
+#searchExample()
 
-if True:
+if False:
 	# A delete that works
-	deleteFromTree("Crick")
+	#deleteFromTree("Crick")
 	db1.getIndex("instructor", "name").printTree()
-	deleteFromTree("Califieri")
+	#deleteFromTree("Califieri")
 	db1.getIndex("instructor", "name").printTree()
 else:
 	# A delete that doesn't work because of missing functionality
-	deleteFromTree("Mozart")
-	db1.getIndex("instructor", "name").printTree()
-	deleteFromTree("Einstein")
-	db1.getIndex("instructor", "name").printTree()
+	deleteFromTree("Srinivasan")
+	with open('11.16.html', 'w') as file:
+	    file.write(DisplayBTree(db1.getIndex("instructor", "name")).html())
 
+	deleteFromTree("Singh")
+	deleteFromTree("Wu")
+	with open('11.17.html', 'w') as file:
+	    file.write(DisplayBTree(db1.getIndex("instructor", "name")).html())
+
+	deleteFromTree("Gold")
+	with open('11.18.html', 'w') as file:
+	    file.write(DisplayBTree(db1.getIndex("instructor", "name")).html())

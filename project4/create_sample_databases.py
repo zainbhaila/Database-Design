@@ -32,14 +32,13 @@ def createDatabase1(name):
 	instructor.insertTuple(Tuple(instr_schema, ('22222', 'Einstein', 'Physics', '95000')));
 	instructor.insertTuple(Tuple(instr_schema, ('32343', 'El Said', 'History', '60000')));
 	instructor.insertTuple(Tuple(instr_schema, ('33456', 'Gold', 'Physics', '87000')));
-	instructor.insertTuple(Tuple(instr_schema, ('33450', 'Gold', 'Physics', '87000')));
 	instructor.insertTuple(Tuple(instr_schema, ('45565', 'Katz', 'Comp. Sci.', '75000')));
 	instructor.insertTuple(Tuple(instr_schema, ('58583', 'Califieri', 'History', '62000')));
 	instructor.insertTuple(Tuple(instr_schema, ('76543', 'Singh', 'Finance', '80000')));
 	instructor.insertTuple(Tuple(instr_schema, ('76766', 'Crick', 'Biology', '72000')));
 	instructor.insertTuple(Tuple(instr_schema, ('83821', 'Brandt', 'Comp. Sci.', '92000')));
 	instructor.insertTuple(Tuple(instr_schema, ('98345', 'Kim', 'Elec. Eng.', '80000')));
-	instructor.insertTuple(Tuple(instr_schema, ('98345', 'Kim', 'Elec Eng.', '80000')));
+	instructor.insertTuple(Tuple(instr_schema, ('83824', 'Adams', 'Comp. Sci.', '92000')));
 
 	dept_schema = ["dept_name", "building", "budget"]
 	department = db.newRelation("department", dept_schema)

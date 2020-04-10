@@ -8,7 +8,7 @@ from disk_relations import *
 # 	A pointer to the Parent B+-tree Block ("None" for the root)
 #	Whether the node is a leaf node
 #	We also compute a "maxlen", i.e., the maximum length of the above list given the key and pointer sizes
-# NOTE: As with the rest of the code here, this is an oversimplification but attempts to capture only 
+# NOTE: As with the rest of the code here, this is an oversimplification but attempts to capture only
 # the key constructs/concepts
 class BTreeBlock(Block):
 	def __init__(self, blockNumber, keysize, isLeaf, parent = None):
@@ -49,7 +49,7 @@ class BTreeBlock(Block):
 
 	# Recursive search procedure -- follow the pointers to the leaf, and then scan the leaf nodes using
 	# the next pointers.
-	def searchByRange(self, keystart, keyend, ret = None): 
+	def searchByRange(self, keystart, keyend, ret = None):
 		if ret is None:
 			ret = [ ]
 		"""This is a recursive procedure that either return 0 or more pointers to the data"""
@@ -61,14 +61,14 @@ class BTreeBlock(Block):
 					# We are finished searching, return
 					return ret
 
-			# If we are here, that means we may need to follow the pointer chain 
+			# If we are here, that means we may need to follow the pointer chain
 			if self.keysAndPointers[len(self.keysAndPointers) - 2] <= keyend:
 				nextPtr = self.keysAndPointers[len(self.keysAndPointers) - 1]
 				if nextPtr is not None:
 					return nextPtr.getBlock().searchByRange(keystart, keyend, ret)
-				else: 
+				else:
 					return ret
-			else: 
+			else:
 				return ret
 		else:
 			for index in range(1, len(self.keysAndPointers), 2):
@@ -86,23 +86,23 @@ class BTreeBlock(Block):
 			if self.hasSpace():
 				self.addPointer(ptr, key)
 				return None
-			else: 
+			else:
 				# print( "Old node too full " + str(self))
 				lprime = Disk.addBlock(BTreeBlock(-1, self.keysize, isLeaf = True, parent = self.parent))
 				# The addPointer function doesn't check for size, so we can go ahead and insert into it
 				# In a real implementation, we would have to copy the list keysAndPointers somewhere else
 				# in memory to do this
-				self.addPointer(ptr, key) 
+				self.addPointer(ptr, key)
 				# print ("Old node too full -- added -- " + str(self))
 				oldlist = self.keysAndPointers
 				self.keysAndPointers = list()
 				lprime.keysAndPointers = list()
 
-				for i in range(0, int(len(oldlist)/4)*2): 
+				for i in range(0, int(len(oldlist)/4)*2):
 					self.keysAndPointers.append(oldlist[i])
 				self.keysAndPointers.append(Pointer(lprime.blockNumber))
 
-				for i in range(int(len(oldlist)/4)*2, len(oldlist)): 
+				for i in range(int(len(oldlist)/4)*2, len(oldlist)):
 					lprime.keysAndPointers.append(oldlist[i])
 
 				return (self, lprime.keysAndPointers[1], lprime)
@@ -115,7 +115,7 @@ class BTreeBlock(Block):
 					found = True
 					ret = self.keysAndPointers[index-1].getBlock().insert(key, ptr)
 					break
-			if not found: 
+			if not found:
 				index = len(self.keysAndPointers)
 				ret = self.keysAndPointers[len(self.keysAndPointers)-1].getBlock().insert(key, ptr)
 			if ret is not None:
@@ -134,14 +134,14 @@ class BTreeBlock(Block):
 					lprime.keysAndPointers = list()
 
 					midpoint = int(len(oldlist)/4)*2
-					for i in range(0, midpoint+1): 
+					for i in range(0, midpoint+1):
 						self.keysAndPointers.append(oldlist[i])
 					kdoubleprime = oldlist[midpoint+1]
 					for i in range(0, len(self.keysAndPointers), 2):
 						self.keysAndPointers[i].getBlock().parent = Pointer(self.blockNumber)
 
 
-					for i in range(midpoint+2, len(oldlist)): 
+					for i in range(midpoint+2, len(oldlist)):
 						lprime.keysAndPointers.append(oldlist[i])
 					for i in range(0, len(lprime.keysAndPointers), 2):
 						lprime.keysAndPointers[i].getBlock().parent = Pointer(lprime.blockNumber)
@@ -151,7 +151,7 @@ class BTreeBlock(Block):
 	def collectNodes(self, mylevel, nodesByLevel):
 		if nodesByLevel[mylevel] is None:
 			nodesByLevel[mylevel] = [self]
-		else: 
+		else:
 			nodesByLevel[mylevel].append(self)
 		if not self.isLeaf:
 			for index in range(0, len(self.keysAndPointers), 2):
@@ -164,11 +164,11 @@ class BTreeBlock(Block):
 			if parentBlock.keysAndPointers[index].blockNumber == self.blockNumber:
 				if index != 0:
 					return (parentBlock.keysAndPointers[index-2].getBlock(), parentBlock.keysAndPointers[index-1], self)
-				else: 
+				else:
 					return (self, parentBlock.keysAndPointers[index+1], parentBlock.keysAndPointers[index+2].getBlock())
 		raise ValueError("This should not happen")
 
-	def canMergeWith(self, otherBlock): 
+	def canMergeWith(self, otherBlock):
 		if self.isLeaf:
 			# For leaves, we have one less pointer to worry about if we merge
 			return (len(self.keysAndPointers) + len(otherBlock.keysAndPointers) - 1) <= self.maxlen
@@ -193,22 +193,50 @@ class BTreeBlock(Block):
 			self.keysAndPointers.append(key)
 			self.keysAndPointers.extend(otherBlock.keysAndPointers)
 
-	def redistributeWithBlock(self, otherBlock):
+	def redistributeWithBlock(self, otherBlock, key): # key is K'
 		print("Redistributing entries between " + str(self) + " and " + str(otherBlock))
-		raise ValueError("Functionality to be implemented")
+		if self.isUnderfull(): # underfull node is predecessor, self is N
+			if not self.isLeaf: # (N is not a leaf node)
+				pm = otherBlock.keysAndPointers.pop(0)
+				km1 = otherBlock.keysAndPointers.pop(0)
+				self.keysAndPointers = self.keysAndPointers + [key, pm]
+				leafBlock = pm.getBlock()
+				leafBlock.parent = Pointer(self.blockNumber)
+				return km1
+			else: # self is a leaf
+				km = otherBlock.keysAndPointers.pop(1)
+				pm = otherBlock.keysAndPointers.pop(0)
+				self.keysAndPointers = self.keysAndPointers[:-1] + [pm, km] + self.keysAndPointers[-1:]
+				return otherBlock.keysAndPointers[1]
+		else: # underfull node is successor (N' is a predecessor to N), otherBlock is N
+			size = len(self.keysAndPointers)
+			if not otherBlock.isLeaf: # (N is not a leaf node) aka interior
+				pm = self.keysAndPointers.pop(size - 1) # remove last pointer in N'
+				km1 = self.keysAndPointers.pop(size - 2) # remove last key in N'
+				otherBlock.keysAndPointers = [pm, key] + otherBlock.keysAndPointers # insert Pm, K' as first pointer and value in N
+				leafBlock = pm.getBlock()
+				leafBlock.parent = Pointer(otherBlock.blockNumber)
+				return km1 # replace K' in parent with Km1
+			else: # N is a leaf node
+				km = self.keysAndPointers.pop(size - 2) # remove last key in N'
+				pm = self.keysAndPointers.pop(size - 3) # remove last pointer in N'
+				otherBlock.keysAndPointers = [pm, km] + otherBlock.keysAndPointers # insert Pm, Km as first pointer and value in N
+				return km # replace K' in parent with Km
 
 	def isUnderfull(self):
-		# Root can't be underful
+		# Root can't be underfulf
 		if self.parent is None:
 			return False
 		if self.isLeaf:
 			# Max number of pointers = (maxlen+1)/2, so we should have at least half of that, i.e.,
 			# at least math.ceil(maxlen+1)/4 pointers
 			return (len(self.keysAndPointers)-1)/2 < math.ceil((self.maxlen+1)/4)
-		else: 
-			return (len(self.keysAndPointers)+1)/2 < math.ceil((self.maxlen+1)/4)
+		else:
+			return (len(self.keysAndPointers)+1)/2 < math.ceil(float(self.maxlen+1)/4)
 
 	def mergeOrRedistributeWithSibling(self):
+		#print("got here")
+		print(self)
 		parentBlock = self.parent.getBlock()
 		(block1, key, block2) = self.findSiblingWithSameParent(parentBlock)
 		if block1.canMergeWith(block2):
@@ -216,16 +244,15 @@ class BTreeBlock(Block):
 			block1.mergeEntriesFromBlock(block2, key)
 			# Need to delete block2 pointer from the parent node
 			return block2
-		else: 
+		else:
 			# Need to redistribute pointers between the two and then modify the parent accordingly
-			newKey = block1.redistributeWithBlock(block2)
-
+			newKey = block1.redistributeWithBlock(block2, key)
 			# Replace key with newKey in the parent
 			for index in range(0, len(parentBlock.keysAndPointers), 2):
 				if parentBlock.keysAndPointers[index].blockNumber == block1.blockNumber:
 					parentBlock.keysAndPointers[index+1] = newKey
 					# We are now done -- return None and stop
-					return None 
+					return None
 			raise ValueError("This should not happen")
 
 	# The following roughly (and partially) implements the algorithm from Figure 11.19
@@ -247,23 +274,23 @@ class BTreeBlock(Block):
 				return self.mergeOrRedistributeWithSibling()
 			else:
 				return None
-		else: 
+		else:
 			# Recurse into the appropriate child
-			# The function may return a ptr and a key to be deleted 
+			# The function may return a ptr and a key to be deleted
 			found = False
 			for index in range(1, len(self.keysAndPointers), 2):
 				if key < self.keysAndPointers[index]:
 					found = True
 					ret = self.keysAndPointers[index-1].getBlock().delete(key, ptr)
 					break
-			if not found: 
+			if not found:
 				index = len(self.keysAndPointers)
 				ret = self.keysAndPointers[len(self.keysAndPointers)-1].getBlock().delete(key, ptr)
 
 			if ret is None:
 				# We are done -- return None and stop
 				return None
-			else: 
+			else:
 				# We need to do a deletion in this node -- ret is the block that needs to be deleted
 				# This may be different from the block that we followed down, so search again
 				found = False
@@ -284,7 +311,7 @@ class BTreeBlock(Block):
 	def collectNodes(self, mylevel, nodesByLevel):
 		if nodesByLevel[mylevel] is None:
 			nodesByLevel[mylevel] = [self]
-		else: 
+		else:
 			nodesByLevel[mylevel].append(self)
 		if not self.isLeaf:
 			for index in range(0, len(self.keysAndPointers), 2):
