@@ -17,10 +17,10 @@ from pyspark import SparkContext
 from functions import *
 
 
-results_json = {"tests": [ ]} 
+results_json = {"tests": [ ]}
 
 def add_test_result(test_no, score, max_score, output):
-    results_json['tests'].append({"score": score, "max_score": max_score, "name": "", "number": test_no, "output": output}) 
+    results_json['tests'].append({"score": score, "max_score": max_score, "name": "", "number": test_no, "output": output})
 
 class TimeoutError(Exception):
     pass
@@ -66,7 +66,7 @@ def compare_two_tuples(t1, t2):
         return False
      for i in range(0, len(t1)):
         #print("-- {} -- {}".format(t1[i], t2[i]))
-         if t1[i] is None or t2[i] is None: 
+         if t1[i] is None or t2[i] is None:
             if t1[i] is not None or t2[i] is not None:
                 return False
          elif int(t1[i]) != int(t2[i]):
@@ -185,7 +185,7 @@ for ix, f in enumerate([execute_task1, execute_task2, execute_task3, execute_tas
 
     if ix < len(all_answers):
         run_one_test(f, all_answers[ix], (ix+1), score)
-    else: 
+    else:
         run_one_test(f, [], (ix+1), score)
 
 

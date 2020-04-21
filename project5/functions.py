@@ -4,18 +4,18 @@ from pyspark import SparkContext
 
 # A hack to avoid having to pass 'sc' around
 dummyrdd = None
-def setDefaultAnswer(rdd): 
+def setDefaultAnswer(rdd):
 	global dummyrdd
 	dummyrdd = rdd
 
 def task1(playRDD):
-        return dummyrdd
+        return playRDD.map(lambda line: (line.split(" ")[0], (line, len(line.strip().split(" "))))).filter(lambda x: x[1][1] > 10)
 
 def task2_flatmap(x):
-        return []
+        return map(lambda x: x.get("surname"), x["laureates"])
 
 def task3(nobelRDD):
-        return dummyrdd
+        return nobelRDD.map(json.loads).map(lambda x: (x["category"], task2_flatmap(x))).reduceByKey(lambda x, y: x + y)
 
 def task4(logsRDD, l):
         return dummyrdd

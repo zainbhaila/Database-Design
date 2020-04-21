@@ -14,24 +14,26 @@ nobelRDD = sc.textFile("datafiles/prize.json")
 ## The following converts the amazonInputRDD into 2-tuples with integers
 amazonBipartiteRDD = amazonInputRDD.map(lambda x: x.split(" ")).map(lambda x: (x[0], x[1])).distinct()
 
-
+'''
 ### Task 1
 print "=========================== Task 1"
 task1_result = task1(playRDD)
 for x in task1_result.takeOrdered(10):
 	print x
-
+'''
+'''
 ### Task 2
 print "=========================== Task 2"
 task2_result = nobelRDD.map(json.loads).flatMap(task2_flatmap).distinct()
 print task2_result.takeOrdered(10)
+'''
 
 #### Task 3
 print "=========================== Task 3"
 task3_result = task3(nobelRDD)
 for x in task3_result.takeOrdered(10):
 	print x
-
+'''
 #### Task 4
 print "=========================== Task 4"
 task4_result = task4(logsRDD, ['01/Jul/1995', '02/Jul/1995'])
@@ -54,7 +56,9 @@ print "=========================== Task 7"
 task7_result = task7(nobelRDD)
 for x in task7_result.takeOrdered(10):
 	print x
+'''
 
+'''
 #### Task 8 -- we will start with a non-empty currentMatching and do a few iterations
 print "=========================== Task 8"
 currentMatching = sc.parallelize([('user1', 'product8')])
@@ -66,3 +70,4 @@ res2 = task8(amazonBipartiteRDD, currentMatching)
 print "Found {} edges to add to the matching".format(res2.count())
 print res2.takeOrdered(100)
 currentMatching = currentMatching.union(res2)
+'''
