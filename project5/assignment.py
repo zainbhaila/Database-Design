@@ -27,23 +27,26 @@ print "=========================== Task 2"
 task2_result = nobelRDD.map(json.loads).flatMap(task2_flatmap).distinct()
 print task2_result.takeOrdered(10)
 '''
-
+'''
 #### Task 3
 print "=========================== Task 3"
 task3_result = task3(nobelRDD)
 for x in task3_result.takeOrdered(10):
 	print x
 '''
+'''
 #### Task 4
 print "=========================== Task 4"
 task4_result = task4(logsRDD, ['01/Jul/1995', '02/Jul/1995'])
 for x in task4_result.takeOrdered(10):
 	print x
-
+'''
+'''
 #### Task 5
 print "=========================== Task 5"
 task5_result = task5(amazonBipartiteRDD)
 print task5_result.collect()
+'''
 
 #### Task 6
 print "=========================== Task 6"
@@ -51,6 +54,7 @@ task6_result = task6(logsRDD, '01/Jul/1995', '02/Jul/1995')
 for x in task6_result.takeOrdered(10):
 	print x
 
+'''
 #### Task 7
 print "=========================== Task 7"
 task7_result = task7(nobelRDD)
