@@ -47,20 +47,19 @@ print "=========================== Task 5"
 task5_result = task5(amazonBipartiteRDD)
 print task5_result.collect()
 '''
-
+'''
 #### Task 6
 print "=========================== Task 6"
 task6_result = task6(logsRDD, '01/Jul/1995', '02/Jul/1995')
 for x in task6_result.takeOrdered(10):
 	print x
-
 '''
+
 #### Task 7
 print "=========================== Task 7"
 task7_result = task7(nobelRDD)
 for x in task7_result.takeOrdered(10):
 	print x
-'''
 
 '''
 #### Task 8 -- we will start with a non-empty currentMatching and do a few iterations
